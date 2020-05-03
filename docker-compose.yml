@@ -1,0 +1,75 @@
+version: '3'
+services:
+
+  #php
+  php:
+    build: ./configs/php
+    container_name: php
+    environment:
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./app/:/var/www
+    ports:
+      - 9000:9000
+    networks:
+      - backend
+
+  nginx:
+    build: ./configs/nginx
+    container_name: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./app:/var/www
+    depends_on:
+      - php
+    networks:
+      - backend
+
+  mysql:
+    image: mysql
+    container_name: mysql
+    command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci',
+              '--default-authentication-plugin=mysql_native_password', "--innodb_use_native_aio=0"]
+    restart: always
+    volumes:
+      - ./configs/mysql/data:/var/lib/mysql
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: homestead
+      MYSQL_USER: homestead
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_HOST: '%'
+    networks:
+      - backend
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      PMA_ARBITRARY: 1
+      MYSQL_ROOT_PASSWORD: root
+      PMA_USER: homestead
+      PMA_PASSWORD: secret
+      PMA_HOST: mysql
+    restart: always
+    ports:
+      - 8080:80
+    networks:
+      - backend
+
+#  adminer:
+#    image: adminer
+#    restart: always
+#    ports:
+#      - 8080:8080
+#    networks;
+#      - backend
+
+#Docker Networks
+networks:
+  backend:
+    driver: bridge
